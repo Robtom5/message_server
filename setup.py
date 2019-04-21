@@ -8,5 +8,7 @@ setup(name='message_server',
     packages=['message_server'],
     install_requires=[
     ],
-    tests_require=['pytest']
+    tests_require=[
+        'pytest',
+        'pytest-cov'],
     zip_safe=False)

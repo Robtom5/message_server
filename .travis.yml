@@ -1,2 +1,15 @@
+dist: xenial
 language: python
+python:
+  - "3.6"
+  - "3.7"
 
+install: 
+  - pip install --ignore-installed --upgrade setuptools coveralls pytest-cov
+  - pip install -e .
+
+script:
+  - pytest --cov=message_server/
+
+after_success:
+  - coveralls
