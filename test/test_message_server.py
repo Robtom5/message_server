@@ -16,15 +16,19 @@ def outQueue():
     yield outQueue
 
 @pytest.fixture(scope='function')
-def testServer(inQueue, outQueue):
-    test_server = MS.MessageServer(controlQueue=inQueue, outputQueue=outQueue)
+def testSocket():
+    test_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    yield test_socket
+
+@pytest.fixture(scope='function')
+def testServer(inQueue, outQueue, testSocket):
+    test_server = MS.MessageServer(testSocket, controlQueue=inQueue, outputQueue=outQueue)
     yield test_server
     test_server.close()
 
 class DummyData():
     def __init__(self, value):
         self.value = value
-
 
 def test_init(testServer):
     assert isinstance(testServer, MS.MessageServer)
@@ -60,7 +64,7 @@ def test_status_generatesMessageWhenServerNotRunning(outQueue, testServer):
     assert not outQueue.empty()
     assert outQueue.get().running == False
 
-def test_serverReceivesData(outQueue, testServer):
+def test_serverReceivesData(outQueue, testServer, testSocket):
     assert outQueue.empty()
     testServer.start()
     testServer.status()
@@ -75,13 +79,10 @@ def test_serverReceivesData(outQueue, testServer):
     assert outQueue.get().running == True
     assert outQueue.empty()
 
+    sender = MS.MessageSender(socket.socket(socket.AF_INET, socket.SOCK_DGRAM))
 
-    port = MS.DEFAULT_UDP_PORT_NO
-    serv = MS.DEFAULT_UDP_IP_ADDRESS
-    prep = MS.DEFAULT_SERIALISER
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     data = DummyData(4)
-    sock.sendto(prep(data), (serv, port))
+    sender.send(data)
 
     while outQueue.empty() and count < 5:
         count += 1

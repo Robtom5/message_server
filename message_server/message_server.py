@@ -4,17 +4,14 @@ import queue
 import socket
 import threading
 from .server_messages import ServerStatusMessage
-
-DEFAULT_UDP_IP_ADDRESS = "127.0.0.1"
-DEFAULT_UDP_PORT_NO = 6789
-DEFAULT_SERIALISER = lambda data : pickle.dumps(data)
-DEFAULT_DESERIALISER = lambda raw : pickle.loads(raw)
+from .defaults import *
 
 # look at https://stackoverflow.com/questions/47391774/python-send-and-receive-objects-through-sockets
 # for serialising and deserialising using pickle
 class MessageServer(threading.Thread):
     def __init__(
             self, 
+            serverSocket,
             host=DEFAULT_UDP_IP_ADDRESS, 
             port=DEFAULT_UDP_PORT_NO, 
             controlQueue = queue.Queue(), 
@@ -22,13 +19,13 @@ class MessageServer(threading.Thread):
             serialiser = DEFAULT_SERIALISER,
             deserialiser = DEFAULT_DESERIALISER):
         threading.Thread.__init__(self)
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.socket = serverSocket
         self.socket.bind((host, port))
         self.socket.settimeout(0.5)
         self._control_queue = controlQueue
         self._output_queue = outputQueue
         self._thread = None
-        self.serialis = serialiser
+        self.serialise = serialiser
         self.deserialise = deserialiser
         self.isRunning = False
 
@@ -76,3 +73,4 @@ class MessageServer(threading.Thread):
                     self._output_queue.put((data, address))
                 except socket.timeout:
                     pass
+
